@@ -1,7 +1,16 @@
+import logging
+
 from pathlib import Path
 
 import joblib
 import pandas as pd
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+)
+
+logger = logging.getLogger(__name__)
 
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
@@ -171,14 +180,14 @@ def preprocess_data():
         ARTIFACT_DIR / "preprocessor.joblib"
     )
 
-    print("Preprocessing completed successfully!")
-    print(f"Training rows: {X_train_processed.shape[0]}")
-    print(f"Testing rows: {X_test_processed.shape[0]}")
-    print(f"Processed feature count: {X_train_processed.shape[1]}")
-    print(f"Training churn rate: {y_train.mean():.3f}")
-    print(f"Testing churn rate: {y_test.mean():.3f}")
-    print(f"Processed files saved to: {PROCESSED_DIR}")
-    print(f"Preprocessor saved to: {ARTIFACT_DIR}")
+    logger.info("Preprocessing completed successfully!")
+    logger.info("Training rows: %s", X_train_processed.shape[0])
+    logger.info("Testing rows: %s", X_test_processed.shape[0])
+    logger.info("Processed feature count: %s", X_train_processed.shape[1])
+    logger.info("Training churn rate: %.3f", y_train.mean())
+    logger.info("Testing churn rate: %.3f", y_test.mean())
+    logger.info("Processed files saved to: %s", PROCESSED_DIR)
+    logger.info("Preprocessor saved to: %s", ARTIFACT_DIR)
 
 
 # --------------------------------------------------

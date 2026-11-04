@@ -2,11 +2,20 @@
 from pathlib import Path
 from typing import Literal
 
+
+import logging
+
 import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 # --------------------------------------------------
 # Paths and configuration
@@ -32,7 +41,7 @@ try:
     if MODEL_PATH.exists():
         model = joblib.load(MODEL_PATH)
 except Exception as exc:
-    print(f"Model loading error: {exc}")
+    logger.error(f"Model loading error: {exc}")
 
 
 # --------------------------------------------------

@@ -1,10 +1,18 @@
 
 from pathlib import Path
 
+
+import logging
 import joblib
 import mlflow
 import mlflow.sklearn
 import pandas as pd
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
@@ -148,9 +156,9 @@ def train_models():
                 for key, value in metrics.items()
             })
 
-            print(f"\nModel: {model_name} (validation)")
+            logger.info(f"\nModel: {model_name} (validation)")
             for metric_name, value in metrics.items():
-                print(f"{metric_name}: {value:.4f}")
+                logger.info(f"{metric_name}: {value:.4f}")
 
             results.append({
                 "model": model_name,
@@ -184,11 +192,11 @@ def train_models():
         index=False,
     )
 
-    print("\n------------------------------")
-    print(f"Selected model: {best_model_name}")
-    print(f"Validation F1-score: {best_f1:.4f}")
-    print(f"Saved final pipeline: {model_path}")
-    print("------------------------------")
+    logger.info("\n------------------------------")
+    logger.info(f"Selected model: {best_model_name}")
+    logger.info(f"Validation F1-score: {best_f1:.4f}")
+    logger.info(f"Saved final pipeline: {model_path}")
+    logger.info("------------------------------")
 
 
 if __name__ == "__main__":

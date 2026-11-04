@@ -1,8 +1,18 @@
 
 from pathlib import Path
 
+
+import logging
 import joblib
 import pandas as pd
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+)
+logger = logging.getLogger(__name__)
+
 
 from sklearn.metrics import (
     accuracy_score,
@@ -106,25 +116,25 @@ def evaluate_model():
     )
 
     # Display results.
-    print("\nTest Set Evaluation")
-    print("------------------------------")
+    logger.info("\nTest Set Evaluation")
+    logger.info("------------------------------")
 
     for metric_name, value in metrics.items():
-        print(f"{metric_name}: {value:.4f}")
+        logger.info(f"{metric_name}: {value:.4f}")
 
-    print("\nConfusion Matrix")
-    print(confusion_df)
+    logger.info("\nConfusion Matrix")
+    logger.info(confusion_df)
 
-    print("\nClassification Report")
-    print(classification_report(
+    logger.info("\nClassification Report")
+    logger.info(classification_report(
         y_test,
         predictions,
         target_names=["No Churn", "Churn"],
         zero_division=0,
     ))
 
-    print("\nEvaluation files saved to:")
-    print(REPORT_DIR)
+    logger.info("\nEvaluation files saved to:")
+    logger.info(REPORT_DIR)
 
 
 if __name__ == "__main__":
