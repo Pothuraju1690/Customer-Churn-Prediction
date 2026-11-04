@@ -1,5 +1,7 @@
+from pathlib import Path
 
 import requests
+import pandas as pd
 import streamlit as st
 
 
@@ -9,16 +11,19 @@ import streamlit as st
 
 API_URL = "http://127.0.0.1:8000/predict"
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DATASET_PATH = PROJECT_ROOT / "data" / "raw" / "dataset.csv"
+
 st.set_page_config(
     page_title="ChurnIQ | Customer Intelligence",
     page_icon="◈",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 
 # --------------------------------------------------
-# Custom styling
+# Styling
 # --------------------------------------------------
 
 st.markdown(
@@ -32,8 +37,8 @@ st.markdown(
 
     .stApp {
         background:
-            radial-gradient(circle at 15% 0%, rgba(53, 91, 220, 0.16), transparent 28%),
-            radial-gradient(circle at 90% 10%, rgba(0, 196, 167, 0.08), transparent 24%),
+            radial-gradient(circle at 15% 0%, rgba(53, 91, 220, 0.13), transparent 28%),
+            radial-gradient(circle at 90% 10%, rgba(0, 196, 167, 0.07), transparent 24%),
             #080d18;
         color: #edf2ff;
     }
@@ -42,202 +47,91 @@ st.markdown(
         background: rgba(8, 13, 24, 0.75);
     }
 
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #0e1628 0%, #0a1020 100%);
-        border-right: 1px solid rgba(148, 163, 184, 0.13);
-    }
-
-    [data-testid="stSidebar"] > div {
-        padding-top: 2rem;
-    }
-
     .brand {
-        font-size: 1.35rem;
+        font-size: 1.25rem;
         font-weight: 800;
-        letter-spacing: -0.7px;
         color: #f8fafc;
+        letter-spacing: -0.5px;
     }
 
     .brand span {
-        color: #6d8cff;
-    }
-
-    .sidebar-caption {
-        color: #8793ad;
-        font-size: 0.78rem;
-        line-height: 1.6;
-        margin-top: 0.5rem;
-    }
-
-    .sidebar-status {
-        background: rgba(16, 185, 129, 0.10);
-        border: 1px solid rgba(16, 185, 129, 0.22);
-        color: #6ee7b7;
-        padding: 0.65rem 0.8rem;
-        border-radius: 10px;
-        font-size: 0.8rem;
-        margin-top: 1.2rem;
+        color: #7c9aff;
     }
 
     .hero {
-        padding: 1.5rem 0 1.2rem 0;
+        padding: 1rem 0 0.8rem 0;
     }
 
     .eyebrow {
         color: #7c9aff;
-        font-size: 0.75rem;
+        font-size: 0.72rem;
         font-weight: 700;
-        letter-spacing: 2px;
+        letter-spacing: 1.8px;
         text-transform: uppercase;
-        margin-bottom: 0.7rem;
+        margin-bottom: 0.6rem;
     }
 
     .hero-title {
         color: #f8fafc;
-        font-size: 2.45rem;
+        font-size: 2.35rem;
         font-weight: 800;
         line-height: 1.15;
-        letter-spacing: -1.5px;
+        letter-spacing: -1.2px;
         margin: 0;
     }
 
     .hero-title span {
-        background: linear-gradient(90deg, #7c9aff, #45dfc2);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: #7c9aff;
     }
 
     .hero-subtitle {
         color: #98a5bf;
-        font-size: 0.96rem;
-        margin-top: 0.8rem;
-        max-width: 760px;
-        line-height: 1.7;
-    }
-
-    .top-chip {
-        display: inline-block;
-        color: #a8baff;
-        background: rgba(93, 124, 255, 0.11);
-        border: 1px solid rgba(124, 154, 255, 0.24);
-        border-radius: 999px;
-        padding: 0.38rem 0.75rem;
-        font-size: 0.75rem;
-        font-weight: 600;
-        margin-bottom: 0.9rem;
+        font-size: 0.92rem;
+        margin-top: 0.65rem;
+        max-width: 720px;
+        line-height: 1.6;
     }
 
     .section-heading {
         color: #f1f5ff;
-        font-size: 1.08rem;
+        font-size: 1.05rem;
         font-weight: 700;
-        margin: 0 0 0.25rem 0;
+        margin-bottom: 0.2rem;
     }
 
     .section-description {
         color: #8592ad;
         font-size: 0.82rem;
-        margin-bottom: 1.1rem;
+        margin-bottom: 1rem;
     }
 
     .panel {
         background: linear-gradient(145deg, rgba(18, 28, 48, 0.96), rgba(12, 20, 36, 0.96));
         border: 1px solid rgba(148, 163, 184, 0.15);
-        border-radius: 16px;
-        padding: 1.2rem 1.3rem;
+        border-radius: 14px;
+        padding: 1rem 1.2rem;
         margin-bottom: 1rem;
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
     }
 
     .metric-card {
         background: linear-gradient(145deg, #131f35, #0e1729);
         border: 1px solid rgba(148, 163, 184, 0.15);
-        border-radius: 14px;
-        padding: 1.1rem 1.2rem;
-        min-height: 115px;
+        border-radius: 12px;
+        padding: 1rem 1.1rem;
+        min-height: 105px;
     }
 
     .metric-label {
         color: #8d9bb7;
-        font-size: 0.78rem;
+        font-size: 0.76rem;
         font-weight: 600;
-        margin-bottom: 0.65rem;
+        margin-bottom: 0.5rem;
     }
 
     .metric-value {
         color: #f8fafc;
-        font-size: 1.65rem;
+        font-size: 1.6rem;
         font-weight: 800;
-        letter-spacing: -0.5px;
-    }
-
-    .metric-note {
-        color: #71809e;
-        font-size: 0.73rem;
-        margin-top: 0.35rem;
-    }
-
-    .result-card {
-        background: linear-gradient(135deg, rgba(22, 34, 58, 0.98), rgba(13, 22, 40, 0.98));
-        border: 1px solid rgba(124, 154, 255, 0.25);
-        border-radius: 18px;
-        padding: 1.5rem;
-        margin-top: 1rem;
-        box-shadow: 0 16px 45px rgba(0, 0, 0, 0.2);
-    }
-
-    .result-title {
-        color: #f8fafc;
-        font-size: 1.35rem;
-        font-weight: 800;
-        margin-bottom: 0.35rem;
-    }
-
-    .result-subtitle {
-        color: #8d9bb7;
-        font-size: 0.82rem;
-        margin-bottom: 1.2rem;
-    }
-
-    .result-status {
-        border-radius: 12px;
-        padding: 1rem 1.1rem;
-        font-weight: 700;
-        font-size: 1rem;
-        margin: 0.8rem 0 1.2rem 0;
-    }
-
-    .status-risk {
-        color: #ffb4b4;
-        background: rgba(239, 68, 68, 0.11);
-        border: 1px solid rgba(239, 68, 68, 0.25);
-    }
-
-    .status-safe {
-        color: #75e6bf;
-        background: rgba(16, 185, 129, 0.10);
-        border: 1px solid rgba(16, 185, 129, 0.22);
-    }
-
-    .probability-label {
-        color: #9aa8c3;
-        font-size: 0.8rem;
-        margin-bottom: 0.4rem;
-    }
-
-    .probability-value {
-        color: #f8fafc;
-        font-size: 2rem;
-        font-weight: 800;
-        letter-spacing: -0.7px;
-    }
-
-    .footer-note {
-        color: #687793;
-        font-size: 0.75rem;
-        line-height: 1.6;
-        text-align: center;
-        padding: 1.5rem 0 0.5rem 0;
     }
 
     div[data-testid="stForm"] {
@@ -254,14 +148,6 @@ st.markdown(
         color: white;
         font-weight: 700;
         background: linear-gradient(90deg, #526fff, #657fff);
-        box-shadow: 0 6px 22px rgba(82, 111, 255, 0.22);
-        transition: all 0.2s ease;
-    }
-
-    div[data-testid="stFormSubmitButton"] button:hover {
-        background: linear-gradient(90deg, #6680ff, #7890ff);
-        transform: translateY(-1px);
-        box-shadow: 0 8px 26px rgba(82, 111, 255, 0.32);
     }
 
     div[data-testid="stWidgetLabel"] p {
@@ -277,20 +163,16 @@ st.markdown(
         border-radius: 8px;
     }
 
-    .stNumberInput button {
-        color: #a8baff !important;
-    }
-
-    hr {
-        border-color: rgba(148, 163, 184, 0.12);
+    .footer-note {
+        color: #687793;
+        font-size: 0.75rem;
+        text-align: center;
+        padding: 1.5rem 0 0.5rem 0;
     }
 
     @media (max-width: 768px) {
         .hero-title {
             font-size: 1.8rem;
-        }
-        .metric-value {
-            font-size: 1.35rem;
         }
     }
     </style>
@@ -300,62 +182,66 @@ st.markdown(
 
 
 # --------------------------------------------------
-# Sidebar
+# Helpers
 # --------------------------------------------------
 
-with st.sidebar:
+@st.cache_data
+def load_dataset():
+    if not DATASET_PATH.exists():
+        return None
+
+    df = pd.read_csv(DATASET_PATH)
+
+    # Normalize whitespace in column names
+    df.columns = df.columns.str.strip()
+
+    # Convert common numeric columns
+    for column in ["tenure", "MonthlyCharges", "TotalCharges"]:
+        if column in df.columns:
+            df[column] = pd.to_numeric(df[column], errors="coerce")
+
+    return df
+
+
+def show_metric(label, value):
     st.markdown(
-        '<div class="brand">◈ Churn<span>IQ</span></div>',
-        unsafe_allow_html=True,
-    )
-
-    st.markdown(
-        """
-        <div class="sidebar-caption">
-            Customer intelligence platform<br>
-            Powered by machine learning
-        </div>
-        <div class="sidebar-status">● Prediction API configured</div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown("---")
-    st.markdown("**WORKSPACE**")
-    st.caption("Customer Risk Analysis")
-    st.caption("Prediction Dashboard")
-
-    st.markdown("---")
-    st.markdown("**MODEL INFORMATION**")
-    st.caption("Algorithm: Selected ML pipeline")
-    st.caption("Dataset: Telco Customer Churn")
-    st.caption("Task: Binary classification")
-
-    st.markdown("---")
-    st.markdown(
-        """
-        <div class="sidebar-caption">
-            ChurnIQ helps estimate customer churn risk
-            from customer profile and service information.
+        f"""
+        <div class="metric-card">
+            <div class="metric-label">{label}</div>
+            <div class="metric-value">{value}</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
 
+def churn_rate_by(df, column):
+    grouped = (
+        df.groupby(column, dropna=False)["Churn"]
+        .apply(lambda values: (values == "Yes").mean() * 100)
+        .sort_values(ascending=False)
+        .to_frame("Churn Rate (%)")
+    )
+    return grouped
+
+
 # --------------------------------------------------
-# Hero section
+# Header
 # --------------------------------------------------
+
+st.markdown(
+    '<div class="brand">◈ Churn<span>IQ</span></div>',
+    unsafe_allow_html=True,
+)
 
 st.markdown(
     """
     <div class="hero">
-        <div class="top-chip">✦ AI-POWERED CUSTOMER ANALYTICS</div>
-        <div class="eyebrow">Customer intelligence / Prediction</div>
+        <div class="eyebrow">Customer Intelligence</div>
         <h1 class="hero-title">Understand risk.<br><span>Retain customers.</span></h1>
         <div class="hero-subtitle">
-            Analyze customer profiles and identify potential churn risk
-            using your trained machine-learning pipeline.
+            Explore customer churn patterns and estimate churn risk
+            using a trained machine-learning model.
         </div>
     </div>
     """,
@@ -366,294 +252,375 @@ st.markdown("---")
 
 
 # --------------------------------------------------
-# Customer input form
+# Tabs
 # --------------------------------------------------
 
-st.markdown(
-    """
-    <div class="section-heading">Customer Profile</div>
-    <div class="section-description">
-        Enter the customer's service, contract, and billing information.
-    </div>
-    """,
-    unsafe_allow_html=True,
+overview_tab, analytics_tab, prediction_tab = st.tabs(
+    ["Overview", "Analytics", "Predict Churn"]
 )
 
-with st.form("customer_form"):
 
-    # Customer details
+# --------------------------------------------------
+# Overview
+# --------------------------------------------------
+
+with overview_tab:
     st.markdown(
-        '<div class="panel"><div class="section-heading">01 — Customer Details</div></div>',
+        '<div class="section-heading">Customer Overview</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="section-description">Summary of the Telco Customer Churn dataset.</div>',
         unsafe_allow_html=True,
     )
 
-    col1, col2, col3 = st.columns(3)
+    df = load_dataset()
 
-    with col1:
-        gender = st.selectbox("Gender", ["Female", "Male"])
-        senior_citizen = st.selectbox(
-            "Senior Citizen",
-            [0, 1],
-            format_func=lambda x: "Yes" if x == 1 else "No",
+    if df is None:
+        st.warning(
+            "Dataset not found. Expected location: "
+            "`data/raw/dataset.csv`"
         )
-        partner = st.selectbox("Has Partner?", ["Yes", "No"])
-        dependents = st.selectbox("Has Dependents?", ["Yes", "No"])
-
-    with col2:
-        tenure = st.number_input(
-            "Tenure (months)", min_value=0, max_value=100, value=12
-        )
-        phone_service = st.selectbox("Phone Service", ["Yes", "No"])
-        multiple_lines = st.selectbox(
-            "Multiple Lines", ["No", "Yes", "No phone service"]
-        )
-        internet_service = st.selectbox(
-            "Internet Service", ["DSL", "Fiber optic", "No"]
+    elif "Churn" not in df.columns:
+        st.error("The dataset does not contain the expected `Churn` column.")
+    else:
+        total_customers = len(df)
+        churned_customers = int((df["Churn"] == "Yes").sum())
+        retained_customers = int((df["Churn"] == "No").sum())
+        churn_rate = (
+            churned_customers / total_customers * 100
+            if total_customers else 0
         )
 
-    with col3:
-        contract = st.selectbox(
-            "Contract", ["Month-to-month", "One year", "Two year"]
+        c1, c2, c3, c4 = st.columns(4)
+
+        with c1:
+            show_metric("TOTAL CUSTOMERS", f"{total_customers:,}")
+        with c2:
+            show_metric("CHURNED", f"{churned_customers:,}")
+        with c3:
+            show_metric("RETAINED", f"{retained_customers:,}")
+        with c4:
+            show_metric("CHURN RATE", f"{churn_rate:.1f}%")
+
+        st.markdown("")
+        st.markdown("**Customer Churn Distribution**")
+
+        distribution = (
+            df["Churn"]
+            .value_counts()
+            .reindex(["No", "Yes"])
+            .fillna(0)
+            .astype(int)
         )
-        paperless_billing = st.selectbox("Paperless Billing", ["Yes", "No"])
-        payment_method = st.selectbox(
-            "Payment Method",
-            [
-                "Electronic check",
-                "Mailed check",
-                "Bank transfer (automatic)",
-                "Credit card (automatic)",
-            ],
-        )
+        distribution.index = ["Retained", "Churned"]
 
-    st.markdown("---")
-
-    # Service options
-    st.markdown(
-        """
-        <div class="section-heading">02 — Service Configuration</div>
-        <div class="section-description">
-            Select the customer's subscribed services.
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    col4, col5, col6 = st.columns(3)
-
-    with col4:
-        online_security = st.selectbox(
-            "Online Security", ["No", "Yes", "No internet service"]
-        )
-        online_backup = st.selectbox(
-            "Online Backup", ["No", "Yes", "No internet service"]
-        )
-
-    with col5:
-        device_protection = st.selectbox(
-            "Device Protection", ["No", "Yes", "No internet service"]
-        )
-        tech_support = st.selectbox(
-            "Tech Support", ["No", "Yes", "No internet service"]
-        )
-
-    with col6:
-        streaming_tv = st.selectbox(
-            "Streaming TV", ["No", "Yes", "No internet service"]
-        )
-        streaming_movies = st.selectbox(
-            "Streaming Movies", ["No", "Yes", "No internet service"]
-        )
-
-    st.markdown("---")
-
-    # Billing
-    st.markdown(
-        """
-        <div class="section-heading">03 — Billing Information</div>
-        <div class="section-description">
-            Provide monthly and cumulative customer charges.
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    col7, col8 = st.columns(2)
-
-    with col7:
-        monthly_charges = st.number_input(
-            "Monthly Charges ($)",
-            min_value=0.0,
-            value=70.0,
-            step=1.0,
-        )
-
-    with col8:
-        total_charges = st.number_input(
-            "Total Charges ($)",
-            min_value=0.0,
-            value=840.0,
-            step=1.0,
-        )
-
-    st.markdown("")
-    submitted = st.form_submit_button("✦  Analyze Customer Churn Risk")
+        st.bar_chart(distribution, use_container_width=True)
 
 
 # --------------------------------------------------
-# Prediction request
+# Analytics
 # --------------------------------------------------
 
-if submitted:
+with analytics_tab:
+    st.markdown(
+        '<div class="section-heading">Churn Analytics</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="section-description">Explore churn patterns across customer groups.</div>',
+        unsafe_allow_html=True,
+    )
 
-    customer_data = {
-        "gender": gender,
-        "SeniorCitizen": senior_citizen,
-        "Partner": partner,
-        "Dependents": dependents,
-        "tenure": tenure,
-        "PhoneService": phone_service,
-        "MultipleLines": multiple_lines,
-        "InternetService": internet_service,
-        "OnlineSecurity": online_security,
-        "OnlineBackup": online_backup,
-        "DeviceProtection": device_protection,
-        "TechSupport": tech_support,
-        "StreamingTV": streaming_tv,
-        "StreamingMovies": streaming_movies,
-        "Contract": contract,
-        "PaperlessBilling": paperless_billing,
-        "PaymentMethod": payment_method,
-        "MonthlyCharges": monthly_charges,
-        "TotalCharges": total_charges,
-    }
+    df = load_dataset()
 
-    try:
-        with st.spinner("Analyzing customer profile..."):
-            response = requests.post(
-                API_URL,
-                json=customer_data,
-                timeout=30,
-            )
+    if df is None:
+        st.warning(
+            "Analytics dataset not found. Expected location: "
+            "`data/raw/dataset.csv`"
+        )
+    elif "Churn" not in df.columns:
+        st.error("The dataset does not contain the expected `Churn` column.")
+    else:
+        left, right = st.columns(2)
 
-        if response.status_code == 200:
-            result = response.json()
-
-            churn_label = result["churn_label"]
-            churn_probability = result["churn_probability"]
-            no_churn_probability = result["no_churn_probability"]
-
-            st.markdown("---")
-            st.markdown(
-                """
-                <div class="section-heading">Prediction Analysis</div>
-                <div class="section-description">
-                    Model-generated estimate based on the submitted profile.
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-            status_class = (
-                "status-risk" if churn_label == "Yes" else "status-safe"
-            )
-
-            status_text = (
-                "⚠  Elevated churn risk detected"
-                if churn_label == "Yes"
-                else "✓  Customer predicted to stay"
-            )
-
-            st.markdown(
-                f"""
-                <div class="result-card">
-                    <div class="eyebrow">MODEL OUTPUT</div>
-                    <div class="result-title">Customer Risk Assessment</div>
-                    <div class="result-subtitle">
-                        Prediction generated successfully
-                    </div>
-                    <div class="result-status {status_class}">
-                        {status_text}
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-            metric1, metric2 = st.columns(2)
-
-            with metric1:
-                st.markdown(
-                    f"""
-                    <div class="metric-card">
-                        <div class="probability-label">CHURN PROBABILITY</div>
-                        <div class="probability-value">
-                            {churn_probability * 100:.2f}%
-                        </div>
-                        <div class="metric-note">
-                            Estimated likelihood of churn
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-            with metric2:
-                st.markdown(
-                    f"""
-                    <div class="metric-card">
-                        <div class="probability-label">RETENTION PROBABILITY</div>
-                        <div class="probability-value">
-                            {no_churn_probability * 100:.2f}%
-                        </div>
-                        <div class="metric-note">
-                            Estimated likelihood of staying
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-            st.markdown("")
-
-            st.markdown("**Probability Distribution**")
-            st.progress(float(churn_probability))
-            st.caption(
-                f"Churn: {churn_probability * 100:.2f}%  ·  "
-                f"Retention: {no_churn_probability * 100:.2f}%"
-            )
-
-            if churn_label == "Yes":
-                st.warning(
-                    "Consider reviewing this customer's contract, service "
-                    "experience, and support needs. This is a model estimate, "
-                    "not a guaranteed outcome."
-                )
+        # Churn by contract
+        with left:
+            st.markdown("**Churn Rate by Contract**")
+            if "Contract" in df.columns:
+                contract_rates = churn_rate_by(df, "Contract")
+                st.bar_chart(contract_rates, use_container_width=True)
             else:
-                st.success(
-                    "The model currently estimates a lower churn likelihood "
-                    "for this customer. Continue monitoring customer experience."
+                st.info("Contract column not available.")
+
+        # Churn by internet service
+        with right:
+            st.markdown("**Churn Rate by Internet Service**")
+            if "InternetService" in df.columns:
+                internet_rates = churn_rate_by(df, "InternetService")
+                st.bar_chart(internet_rates, use_container_width=True)
+            else:
+                st.info("InternetService column not available.")
+
+        left, right = st.columns(2)
+
+        # Churn by tenure groups
+        with left:
+            st.markdown("**Churn Rate by Tenure**")
+            if "tenure" in df.columns:
+                tenure_df = df[["tenure", "Churn"]].dropna().copy()
+                tenure_df["Tenure Group"] = pd.cut(
+                    tenure_df["tenure"],
+                    bins=[-1, 12, 24, 48, 72, 120],
+                    labels=[
+                        "0–12 months",
+                        "13–24 months",
+                        "25–48 months",
+                        "49–72 months",
+                        "73+ months",
+                    ],
                 )
 
-            st.caption(
-                "Predictions are estimates based on historical data and should "
-                "not be treated as guaranteed customer behavior."
-            )
+                tenure_rates = churn_rate_by(tenure_df, "Tenure Group")
+                tenure_rates = tenure_rates.reindex(
+                    [
+                        "0–12 months",
+                        "13–24 months",
+                        "25–48 months",
+                        "49–72 months",
+                        "73+ months",
+                    ]
+                ).dropna()
 
-        else:
-            st.error(
-                f"API returned status {response.status_code}: "
-                f"{response.text}"
-            )
+                st.bar_chart(tenure_rates, use_container_width=True)
+            else:
+                st.info("Tenure column not available.")
 
-    except requests.exceptions.ConnectionError:
-        st.error(
-            "Unable to connect to the FastAPI server. "
-            "Ensure the API is running at http://127.0.0.1:8000."
+        # Monthly charges by churn status
+        with right:
+            st.markdown("**Average Monthly Charges**")
+            if "MonthlyCharges" in df.columns:
+                charges = (
+                    df.groupby("Churn")["MonthlyCharges"]
+                    .mean()
+                    .reindex(["No", "Yes"])
+                    .dropna()
+                    .to_frame("Average Monthly Charges")
+                )
+                charges.index = charges.index.map(
+                    {"No": "Retained", "Yes": "Churned"}
+                )
+                st.bar_chart(charges, use_container_width=True)
+            else:
+                st.info("MonthlyCharges column not available.")
+
+        st.caption(
+            "Churn rates are calculated from the historical dataset. "
+            "These charts describe patterns and do not establish causation."
         )
 
-    except requests.exceptions.RequestException as exc:
-        st.error(f"Prediction request failed: {exc}")
+
+# --------------------------------------------------
+# Prediction form
+# --------------------------------------------------
+
+with prediction_tab:
+    st.markdown(
+        '<div class="section-heading">Customer Risk Assessment</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="section-description">Enter customer information and submit it to the prediction API.</div>',
+        unsafe_allow_html=True,
+    )
+
+    with st.form("customer_form"):
+
+        st.markdown("**01 — Customer Details**")
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            gender = st.selectbox("Gender", ["Female", "Male"])
+            senior_citizen = st.selectbox(
+                "Senior Citizen",
+                [0, 1],
+                format_func=lambda x: "Yes" if x == 1 else "No",
+            )
+            partner = st.selectbox("Has Partner?", ["Yes", "No"])
+            dependents = st.selectbox("Has Dependents?", ["Yes", "No"])
+
+        with col2:
+            tenure = st.number_input(
+                "Tenure (months)", min_value=0, max_value=100, value=12
+            )
+            phone_service = st.selectbox("Phone Service", ["Yes", "No"])
+            multiple_lines = st.selectbox(
+                "Multiple Lines", ["No", "Yes", "No phone service"]
+            )
+            internet_service = st.selectbox(
+                "Internet Service", ["DSL", "Fiber optic", "No"]
+            )
+
+        with col3:
+            contract = st.selectbox(
+                "Contract", ["Month-to-month", "One year", "Two year"]
+            )
+            paperless_billing = st.selectbox(
+                "Paperless Billing", ["Yes", "No"]
+            )
+            payment_method = st.selectbox(
+                "Payment Method",
+                [
+                    "Electronic check",
+                    "Mailed check",
+                    "Bank transfer (automatic)",
+                    "Credit card (automatic)",
+                ],
+            )
+
+        st.markdown("---")
+        st.markdown("**02 — Service Configuration**")
+
+        col4, col5, col6 = st.columns(3)
+
+        with col4:
+            online_security = st.selectbox(
+                "Online Security", ["No", "Yes", "No internet service"]
+            )
+            online_backup = st.selectbox(
+                "Online Backup", ["No", "Yes", "No internet service"]
+            )
+
+        with col5:
+            device_protection = st.selectbox(
+                "Device Protection", ["No", "Yes", "No internet service"]
+            )
+            tech_support = st.selectbox(
+                "Tech Support", ["No", "Yes", "No internet service"]
+            )
+
+        with col6:
+            streaming_tv = st.selectbox(
+                "Streaming TV", ["No", "Yes", "No internet service"]
+            )
+            streaming_movies = st.selectbox(
+                "Streaming Movies", ["No", "Yes", "No internet service"]
+            )
+
+        st.markdown("---")
+        st.markdown("**03 — Billing Information**")
+
+        col7, col8 = st.columns(2)
+
+        with col7:
+            monthly_charges = st.number_input(
+                "Monthly Charges ($)",
+                min_value=0.0,
+                value=70.0,
+                step=1.0,
+            )
+
+        with col8:
+            total_charges = st.number_input(
+                "Total Charges ($)",
+                min_value=0.0,
+                value=840.0,
+                step=1.0,
+            )
+
+        submitted = st.form_submit_button("Analyze Churn Risk")
+
+
+    # --------------------------------------------------
+    # Prediction request and result
+    # --------------------------------------------------
+
+    if submitted:
+        customer_data = {
+            "gender": gender,
+            "SeniorCitizen": senior_citizen,
+            "Partner": partner,
+            "Dependents": dependents,
+            "tenure": tenure,
+            "PhoneService": phone_service,
+            "MultipleLines": multiple_lines,
+            "InternetService": internet_service,
+            "OnlineSecurity": online_security,
+            "OnlineBackup": online_backup,
+            "DeviceProtection": device_protection,
+            "TechSupport": tech_support,
+            "StreamingTV": streaming_tv,
+            "StreamingMovies": streaming_movies,
+            "Contract": contract,
+            "PaperlessBilling": paperless_billing,
+            "PaymentMethod": payment_method,
+            "MonthlyCharges": monthly_charges,
+            "TotalCharges": total_charges,
+        }
+
+        try:
+            with st.spinner("Analyzing customer profile..."):
+                response = requests.post(
+                    API_URL,
+                    json=customer_data,
+                    timeout=30,
+                )
+
+            if response.status_code == 200:
+                result = response.json()
+
+                churn_label = result["churn_label"]
+                churn_probability = float(result["churn_probability"])
+                no_churn_probability = float(result["no_churn_probability"])
+
+                st.markdown("---")
+                st.markdown("**Prediction Result**")
+
+                if churn_label == "Yes":
+                    st.error("Elevated churn risk detected")
+                else:
+                    st.success("Customer predicted to stay")
+
+                metric1, metric2 = st.columns(2)
+
+                with metric1:
+                    show_metric(
+                        "CHURN PROBABILITY",
+                        f"{churn_probability * 100:.2f}%",
+                    )
+
+                with metric2:
+                    show_metric(
+                        "RETENTION PROBABILITY",
+                        f"{no_churn_probability * 100:.2f}%",
+                    )
+
+                st.markdown("**Churn Probability**")
+                st.progress(max(0.0, min(1.0, churn_probability)))
+
+                st.caption(
+                    "Predictions are estimates based on historical data, "
+                    "not guaranteed customer behavior."
+                )
+
+            else:
+                st.error(
+                    f"API returned status {response.status_code}: "
+                    f"{response.text}"
+                )
+
+        except requests.exceptions.ConnectionError:
+            st.error(
+                "Unable to connect to FastAPI. Ensure the API is running "
+                "at http://127.0.0.1:8000."
+            )
+
+        except requests.exceptions.RequestException as exc:
+            st.error(f"Prediction request failed: {exc}")
+
+        except (KeyError, ValueError, TypeError) as exc:
+            st.error(f"Unexpected prediction response: {exc}")
 
 
 # --------------------------------------------------
@@ -663,8 +630,7 @@ if submitted:
 st.markdown(
     """
     <div class="footer-note">
-        ChurnIQ · Customer Churn Prediction<br>
-        Machine-learning decision support · Not a guarantee of future behavior
+        ChurnIQ · Customer Churn Prediction
     </div>
     """,
     unsafe_allow_html=True,
