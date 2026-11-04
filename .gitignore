@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+
+# Testing and logs
+.pytest_cache/
+.coverage
+logs/
+*.log
+
+# Data files (DVC will track data separately)
+!data/
+!data/**/.gitkeep
+
+# Generated model artifacts
+mlflow.db
+mlruns/
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# DVC local cache
+.dvc/cache/
+
+# Generated model artifacts (managed by DVC)
+artifacts/model/
+artifacts/model_comparison.csv
+
+# Local review archive
+code_review.zip

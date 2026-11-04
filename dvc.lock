@@ -1,0 +1,83 @@
+schema: '2.0'
+stages:
+  preprocess:
+    cmd: python -m src.data.preprocess
+    deps:
+    - path: data/raw/dataset.csv
+      hash: md5
+      md5: 0f9de68e012bd3aed5fa7cdc9fc421af
+      size: 977501
+    - path: src/data/preprocess.py
+      hash: md5
+      md5: ac068299ae02c6264a2842aa1f8061cb
+      size: 5516
+    outs:
+    - path: artifacts/model/preprocessor.joblib
+      hash: md5
+      md5: 23c68fa4e02fa217ddc374be1e1926a0
+      size: 7412
+    - path: data/processed
+      hash: md5
+      md5: 3eff03a5a21b0dd95da73efa8c1e677d.dir
+      size: 2623956
+      nfiles: 6
+  train:
+    cmd: python -m src.models.train
+    deps:
+    - path: data/processed/X_train_raw.csv
+      hash: md5
+      md5: 719bdb5902116533b26b91a9e2615bfd
+      size: 702572
+    - path: data/processed/y_train.csv
+      hash: md5
+      md5: f597c5156799e0428077438ebc926949
+      size: 16909
+    - path: src/data/preprocess.py
+      hash: md5
+      md5: ac068299ae02c6264a2842aa1f8061cb
+      size: 5516
+    - path: src/models/train.py
+      hash: md5
+      md5: e542ef50485b94d1e5add2639854f009
+      size: 5647
+    outs:
+    - path: artifacts/model/best_model.joblib
+      hash: md5
+      md5: 67efa8cf727903455e56a9289fe149ca
+      size: 14927147
+    - path: artifacts/model_comparison.csv
+      hash: md5
+      md5: 06c19a90c53fa7e2a48621c3d17c3215
+      size: 438
+  evaluate:
+    cmd: python -m src.models.evaluate
+    deps:
+    - path: artifacts/model/best_model.joblib
+      hash: md5
+      md5: 67efa8cf727903455e56a9289fe149ca
+      size: 14927147
+    - path: data/processed/X_test_raw.csv
+      hash: md5
+      md5: 9696b72ed9242a085fa41640cb9d283a
+      size: 176106
+    - path: data/processed/y_test.csv
+      hash: md5
+      md5: e958151f165f7f472b725188c9e97a20
+      size: 4234
+    - path: src/models/evaluate.py
+      hash: md5
+      md5: 2251e75e04f02df15a4995ad5b10e132
+      size: 3253
+    outs:
+    - path: reports/classification_report.csv
+      hash: md5
+      md5: 3f746fc72abc3c116279fe721c3ac164
+      size: 403
+    - path: reports/confusion_matrix.csv
+      hash: md5
+      md5: d1f232c76691fa49dcd5360d16c64443
+      size: 67
+    - path: reports/test_metrics.csv
+      hash: md5
+      md5: 81860c96878fe675c0fbc028a2364d68
+      size: 128

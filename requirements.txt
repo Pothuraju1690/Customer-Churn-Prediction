@@ -1,0 +1,32 @@
+
+# Data analysis and visualization
+pandas
+numpy
+matplotlib
+seaborn
+jupyter
+
+# Machine learning
+scikit-learn
+joblib
+
+# MLOps
+mlflow
+dvc
+
+# API
+fastapi
+uvicorn[standard]
+pydantic
+
+# Frontend
+streamlit
+requests
+
+# Testing
+pytest
+httpx
+
+# Configuration and utilities
+PyYAML
+python-dotenv
